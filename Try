@@ -1,0 +1,76 @@
+from datetime import datetime
+import json
+
+# --- ⛽️ Класс Топлива (Fuel) ---
+class Fuel:
+    """Представляет тип топлива с его ценой и запасом."""
+    def __init__(self, name, price_per_liter, stock_liters):
+        self.name = name
+        self.price = price_per_liter  # Цена за литр
+        self.stock = stock_liters     # Текущий запас на станции
+
+    def get_price(self):
+        """Возвращает текущую цену."""
+        return self.price
+
+    def update_stock(self, amount_sold):
+        """Уменьшает запас топлива после продажи."""
+        if self.stock >= amount_sold:
+            self.stock -= amount_sold
+            return True
+        else:
+            return False
+
+# --- 🏢 Класс Заправочной Станции (Gas Station) ---
+class GasStation:
+    """Центральная система управления АЗС."""
+    def __init__(self, name):
+        self.name = name
+        self.fuel_inventory = {}  # Словарь: имя топлива -> объект Fuel
+        self.transactions = []    # Список всех завершенных транзакций
+
+    def add_fuel(self, fuel_obj):
+        """Добавляет новый тип топлива в инвентарь."""
+        self.fuel_inventory[fuel_obj.name] = fuel_obj
+
+    def display_prices(self):
+        """Отображает текущие цены на топливо."""
+        print(f"\n--- Цены на топливо в {self.name} ---")
+        for name, fuel in self.fuel_inventory.items():
+            print(f"| {name:<10}: {fuel.price:.2f} руб./литр | (Остаток: {fuel.stock:.0f} л)")
+        print("-" * 34)
+
+    def process_transaction(self, fuel_name, volume_liters):
+        """
+        Обрабатывает одну транзакцию заправки.
+        :param fuel_name: Название выбранного топлива
+        :param volume_liters: Объем в литрах
+        :return: Общая стоимость или None, если произошла ошибка.
+        """
+        if fuel_name not in self.fuel_inventory:
+            print(f"❌ Ошибка: Топливо '{fuel_name}' не найдено.")
+            return None
+
+        fuel = self.fuel_inventory[fuel_name]
+
+        if not fuel.update_stock(volume_liters):
+            print(f"❌ Ошибка: Недостаточно запаса топлива '{fuel_name}'. Доступно: {fuel.stock:.0f} л.")
+            return None
+
+        total_cost = volume_liters * fuel.get_price()
+        
+        # Логирование транзакции
+        transaction = {
+            "timestamp": datetime.now().isoformat(),
+            "fuel": fuel_name,
+            "volume_liters": volume_liters,
+            "price_per_liter": fuel.get_price(),
+            "total_cost": total_cost
+        }
+        self.transactions.append(transaction)
+
+        print(f"\n--- ЧЕК ---")
+        print(f"Топливо: {fuel_name}")
+        print(f"Объем: {volume_liters:.2f} л")
+        print(f"Цена/л: {fuel.get_price():.2f} руб.")
+        print
